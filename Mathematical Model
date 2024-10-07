@@ -27,10 +27,14 @@ demand = {'D1': 100, 'D2': 150, 'D3': 200}
 
 modelo = plp.LpProblem("Green_Hydrogen_Supply_Chain", plp.LpMinimize)
 
-#Decision variable: quantity of H2 transported from local i to district j
-quatity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="Continuous")
+# DECISION VARIABLE: quantity of H2 transported from local i to district j
+quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="Continuous")
 
-#Decision variable: if a fabric is installed in local i with size z
+# DECISION VARIABLE: if a fabric is installed in local i with size z
 fabric_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="binary")
 
-#Objective function: minimize the costs of installation and transportation
+# OBJECTIVE FUNCTION: minimize the costs of installation and transportation
+modelo += (plp.lpSum(fabric_installed[(i, z)] * cost_instalation[i][z] for i in locals for z in ["S", "M", "L"]) 
+           + plp.lpSum(quantity_transported[i, j] * transportation_cost[(i, j)] * distance [(i, j)] for i in locals for j in districts))
+
+# CONSTRAINTS
