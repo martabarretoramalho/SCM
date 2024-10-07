@@ -1,1 +1,31 @@
+import pulp as plp
 
+locals = ["L1", "L2", "L3"]
+districts = ["D1", "D2", "D3"]
+
+cost_instalation = {
+    "L1": {"S": 17800, "M": 267000, "L": 854400},
+    "L2": {"S": 17800, "M": 267000, "L": 854400},
+    "L3": {"S": 17800, "M": 267000, "L": 854400},
+}
+
+fabrics_capacity = {"S": 10, "M": 150, "L": 480}
+
+transportation_cost = {
+    ('L1', 'D1'): 0.4, ('L1', 'D2'): 0.45, ('L1', 'D3'): 0.5,
+    ('L2', 'D1'): 0.35, ('L2', 'D2'): 0.4, ('L2', 'D3'): 0.45,
+    ('L3', 'D1'): 0.5, ('L3', 'D2'): 0.35, ('L3', 'D3'): 0.4
+}
+
+distance = {
+    ('L1', 'D1'): 200, ('L1', 'D2'): 300, ('L1', 'D3'): 400,
+    ('L2', 'D1'): 150, ('L2', 'D2'): 250, ('L2', 'D3'): 350,
+    ('L3', 'D1'): 100, ('L3', 'D2'): 200, ('L3', 'D3'): 300
+}
+
+demand = {'D1': 100, 'D2': 150, 'D3': 200}
+
+modelo = plp.LpProblem("Green_Hydrogen_Supply_Chain", plp.LpMinimize)
+
+#Decision variable: quantity of H2 transported from local i to district j
+quatity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="Continuous")
