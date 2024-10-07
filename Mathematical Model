@@ -1,7 +1,7 @@
 import pulp as plp
 
-locals = ["L1", "L2", "L3"]
-districts = ["D1", "D2", "D3"]
+locals = ["L1", "L2", "L3"] # where to produce
+districts = ["D1", "D2", "D3"] # where to consume
 
 cost_instalation = {
     "L1": {"S": 17800, "M": 267000, "L": 854400},
