@@ -59,7 +59,13 @@ energy_availability = {
     "L18": {"hydro": 0, "wind": 0, "solar": 0},
 }
 
-modelo = plp.LpProblem("Green_Hydrogen_Supply_Chain", plp.LpMinimize)
+targets = {
+    2030: 0.035,
+    2040: 0.125,
+    2050: 0.225
+}
+
+model = plp.LpProblem("Green_Hydrogen_Supply_Chain", plp.LpMinimize)
 
 # DECISION VARIABLE: quantity of H2 transported from local i to district j
 quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="Continuous")
@@ -68,21 +74,26 @@ quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for 
 fabric_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="binary")
 
 # OBJECTIVE FUNCTION: minimize the costs of installation and transportation
-modelo += (plp.lpSum(fabric_installed[(i, z)] * cost_instalation[i][z] for i in locals for z in ["S", "M", "L"]) 
+model += (plp.lpSum(fabric_installed[(i, z)] * cost_instalation[i][z] for i in locals for z in ["S", "M", "L"]) 
            + plp.lpSum(quantity_transported[i, j] * transportation_cost[(i, j)] * distance [(i, j)] for i in locals for j in districts))
 
 # CONSTRAINTS
 # 1 - The total production in each local can't exceed the total capacity of that fabric
 for i in locals:
     for z in ['S', 'M', 'L']:
-        modelo += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= fabrics_capacity[z] * fabric_installed[(i, z)], f"Capacidade_fabrica_{i}_{z}"
+        model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= fabrics_capacity[z] * fabric_installed[(i, z)], f"Capacidade_fabrica_{i}_{z}"
 
 # 2 - Total demand in each district has to be satisfied
 for j in districts:
-    modelo += plp.lpSum(quantity_transported[(i, j)] for i in locals) >= demand[j], f"Demand_{j}"
+    model += plp.lpSum(quantity_transported[(i, j)] for i in locals) >= demand[j], f"Demand_{j}"
     
 # 3- Constraint to renewable energy
 for i in locals:
     # We can define a rule of proportion, depending on how much renewable energy is necessary to produce one unit of H₂.
-    modelo += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= (energy_availability[i]["hydro"] + energy_availability[i]["wind"] + energy_availability[i]["solar"]), f"Energia_disponivel_{i}"
+    model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= (energy_availability[i]["hydro"] + energy_availability[i]["wind"] + energy_availability[i]["solar"]), f"Energia_disponivel_{i}"
     
+# Constraint to satisfy the adjusted demand for the years 2030, 2040, 2050 
+for year, target in targets.items():
+    demand_target = {j: demand[j] * target for j in districts}
+    for j in districts:
+        model += plp.lpSum(quantity_transported[(i, j)] for i in locals) >= demand_target[j], f"Demand_{j}_{year}"
