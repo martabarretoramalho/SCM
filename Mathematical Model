@@ -97,3 +97,15 @@ for year, target in targets.items():
     demand_target = {j: demand[j] * target for j in districts}
     for j in districts:
         model += plp.lpSum(quantity_transported[(i, j)] for i in locals) >= demand_target[j], f"Demand_{j}_{year}"
+
+model.solve()
+
+print("Status:", plp.LpStatus[model.status])
+for i in locals:
+    for j in districts:
+        if quantity_transported[(i, j)].varValue > 0:
+            print(f"Quantity transported from {i} to {j}: {quantity_transported[(i, j)].varValue} tH2")
+for i in locals:
+    for z in ["S", "M", "L"]:
+        if fabric_installed[(i, z)].varValue > 0:
+            print(f"Fabrics of size {z} installed in {i}: {fabric_installed[(i, z)].varValue}")
