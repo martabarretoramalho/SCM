@@ -137,12 +137,12 @@ for i in locals:
 # 2 - Total demand in each district has to be satisfied
 for j in districts:
     model += plp.lpSum(quantity_transported[(i, j)] for i in locals) >= demand[j], f"Demand_{j}"
-
-# REVER   
+  
 # 3- Constraint to renewable energy
 for i in locals:
     # We can define a rule of proportion, depending on how much renewable energy is necessary to produce one unit of H₂.
-    model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= (energy_availability[i]["hydro"] + energy_availability[i]["wind"] + energy_availability[i]["solar"]), f"Energia_disponivel_{i}"
+    model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= (energy_availability[i]["hydro"] + energy_availability[i]["wind"] 
+                                                                            + energy_availability[i]["solar"]), f"Energia_disponivel_{i}"
 
 # REVER        
 # Constraint to satisfy the adjusted demand for the years 2030, 2040, 2050 
@@ -162,5 +162,4 @@ print("\nInstalled Fabrics:")
 for i in locals:
     for z in ["S", "M", "L"]:
         if fabric_installed[(i, z)].varValue > 0:
-            print(f"Fabrics of size {z} installed in {i}: {fabric_installed[(i, z)].varValue}") # REVER ESTA LINHA
-            
+            print(f"Fabrics of size {z} installed in {i}: {fabric_installed[(i, z)].varValue}")
