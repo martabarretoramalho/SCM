@@ -1,0 +1,164 @@
+import pulp as plp
+
+locals = ["L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10", "L11", "L12", "L13", "L14", "L15", "L16", "L17", "L18"] # where to produce
+districts = ["Bragança", "Viseu", "Vila Real", "Coimbra", "Viana do Castelo", "Braga", "Guarda", 
+             "Castelo Branco", "Beja", "Santarém", "Lisboa", "Porto", "Leiria", "Faro", 
+             "Aveiro", "Setúbal", "Portalegre", "Évora"] # where to consume
+
+cost_instalation = {loc: {"S": 20000, "M": 297000, "L": 854400} for loc in locals}
+
+fabrics_capacity = {"S": 10, "M": 150, "L": 480}
+
+distance = {
+    ('L1', 'Bragança'):0, ('L1', 'Viseu'): 200, ('L1', 'Vila Real'): 118, ('L1', 'Coimbra'): 324, ('L1', 'Viana do Castelo'): 274, ('L1', 'Braga'): 217, ('L1', 'Guarda'): 178, 
+    ('L1', 'Castelo Branco'): 273, ('L1', 'Beja'): 542, ('L1', 'Santarém'): 444, ('L1', 'Lisboa'): 510, ('L1', 'Porto'): 210, ('L1', 'Leiria'): 383, ('L1', 'Faro'): 751, 
+    ('L1', 'Aveiro'): 272, ('L1', 'Setúbal'): 545, ('L1', 'Portalegre'): 363, ('L1', 'Évora'): 462,
+    ('L2', 'Bragança'): 200, ('L2', 'Viseu'): 0, ('L2', 'Vila Real'): 97, ('L2', 'Coimbra'): 94, ('L2', 'Viana do Castelo'): 200, ('L2', 'Braga'): 176, ('L2', 'Guarda'): 76, 
+    ('L2', 'Castelo Branco'): 170, ('L2', 'Beja'): 428, ('L2', 'Santarém'): 225, ('L2', 'Lisboa'): 291, ('L2', 'Porto'): 127, ('L2', 'Leiria'): 195, ('L2', 'Faro'): 528, 
+    ('L2', 'Aveiro'): 86, ('L2', 'Setúbal'): 327, ('L2', 'Portalegre'): 260, ('L2', 'Évora'): 360, 
+    ('L3', 'Bragança'): 118, ('L3', 'Viseu'): 97, ('L3', 'Vila Real'): 0, ('L3', 'Coimbra'): 214, ('L3', 'Viana do Castelo'): 164, ('L3', 'Braga'): 107, ('L3', 'Guarda'): 171, 
+    ('L3', 'Castelo Branco'): 266, ('L3', 'Beja'): 536, ('L3', 'Santarém'): 334, ('L3', 'Lisboa'): 400, ('L3', 'Porto'): 100, ('L3', 'Leiria'): 273, ('L3', 'Faro'): 637, 
+    ('L3', 'Aveiro'): 162, ('L3', 'Setúbal'): 435, ('L3', 'Portalegre'): 355, ('L3', 'Évora'): 493,
+    ('L4', 'Bragança'): 324, ('L4', 'Viseu'): 94, ('L4', 'Vila Real'): 214, ('L4', 'Coimbra'): 0, ('L4', 'Viana do Castelo'): 195, ('L4', 'Braga'): 171, ('L4', 'Guarda'): 155, 
+    ('L4', 'Castelo Branco'): 138, ('L4', 'Beja'): 343, ('L4', 'Santarém'): 141, ('L4', 'Lisboa'): 206, ('L4', 'Porto'): 122, ('L4', 'Leiria'): 79, ('L4', 'Faro'): 443, 
+    ('L4', 'Aveiro'): 63, ('L4', 'Setúbal'): 242, ('L4', 'Portalegre'): 172, ('L4', 'Évora'): 300,
+    ('L5', 'Bragança'): 274, ('L5', 'Viseu'): 200, ('L5', 'Vila Real'): 164, ('L5', 'Coimbra'): 195, ('L5', 'Viana do Castelo'): 0, ('L5', 'Braga'): 62, ('L5', 'Guarda'): 273, 
+    ('L5', 'Castelo Branco'): 331, ('L5', 'Beja'): 521, ('L5', 'Santarém'): 320, ('L5', 'Lisboa'): 385, ('L5', 'Porto'): 74, ('L5', 'Leiria'): 258, ('L5', 'Faro'): 622, 
+    ('L5', 'Aveiro'): 148, ('L5', 'Setúbal'): 421, ('L5', 'Portalegre'): 365, ('L5', 'Évora'): 478,
+    ('L6', 'Bragança'): 217, ('L6', 'Viseu'): 176, ('L6', 'Vila Real'): 107, ('L6', 'Coimbra'): 171, ('L6', 'Viana do Castelo'): 62, ('L6', 'Braga'): 0, ('L6', 'Guarda'): 251, 
+    ('L6', 'Castelo Branco'): 309, ('L6', 'Beja'): 499, ('L6', 'Santarém'): 298, ('L6', 'Lisboa'): 363, ('L6', 'Porto'): 57, ('L6', 'Leiria'): 236, ('L6', 'Faro'): 600, 
+    ('L6', 'Aveiro'): 126, ('L6', 'Setúbal'): 399, ('L6', 'Portalegre'): 344, ('L6', 'Évora'): 457,
+    ('L7', 'Bragança'): 178, ('L7', 'Viseu'): 76, ('L7', 'Vila Real'): 171, ('L7', 'Coimbra'): 155, ('L7', 'Viana do Castelo'): 273, ('L7', 'Braga'): 251, ('L7', 'Guarda'): 0, 
+    ('L7', 'Castelo Branco'): 99, ('L7', 'Beja'): 369, ('L7', 'Santarém'): 253, ('L7', 'Lisboa'): 318, ('L7', 'Porto'): 200, ('L7', 'Leiria'): 262, ('L7', 'Faro'): 555, 
+    ('L7', 'Aveiro'): 159, ('L7', 'Setúbal'): 354, ('L7', 'Portalegre'): 189, ('L7', 'Évora'): 289,
+    ('L8', 'Bragança'): 273, ('L8', 'Viseu'): 170, ('L8', 'Vila Real'): 266, ('L8', 'Coimbra'): 138, ('L8', 'Viana do Castelo'): 331, ('L8', 'Braga'): 309, ('L8', 'Guarda'): 99,
+    ('L8', 'Castelo Branco'): 0, ('L8', 'Beja'): 275, ('L8', 'Santarém'): 159, ('L8', 'Lisboa'): 224, ('L8', 'Porto'): 257, ('L8', 'Leiria'): 169, ('L8', 'Faro'): 461, 
+    ('L8', 'Aveiro'): 199, ('L8', 'Setúbal'): 260, ('L8', 'Portalegre'): 95, ('L8', 'Évora'): 195,
+    ('L9', 'Bragança'): 542, ('L9', 'Viseu'): 428, ('L9', 'Vila Real'): 536, ('L9', 'Coimbra'): 343, ('L9', 'Viana do Castelo'): 521, ('L9', 'Braga'): 499, ('L9', 'Guarda'): 369,
+    ('L9', 'Castelo Branco'): 275, ('L9', 'Beja'): 0, ('L9', 'Santarém'): 205, ('L9', 'Lisboa'): 176, ('L9', 'Porto'): 448, ('L9', 'Leiria'): 283, ('L9', 'Faro'): 147,
+    ('L9', 'Aveiro'): 389, ('L9', 'Setúbal'): 142, ('L9', 'Portalegre'): 181, ('L9', 'Évora'): 80,
+    ('L10', 'Bragança'): 444, ('L10', 'Viseu'): 225, ('L10', 'Vila Real'): 334, ('L10', 'Coimbra'): 141, ('L10', 'Viana do Castelo'): 320, ('L10', 'Braga'): 298, ('L10', 'Guarda'): 253,
+    ('L10', 'Castelo Branco'): 159, ('L10', 'Beja'): 205, ('L10', 'Santarém'): 0, ('L10', 'Lisboa'): 80, ('L10', 'Porto'): 245, ('L10', 'Leiria'): 81, ('L10', 'Faro'): 307, 
+    ('L10', 'Aveiro'): 186, ('L10', 'Setúbal'): 117, ('L10', 'Portalegre'): 162, ('L10', 'Évora'): 163,
+    ('L11', 'Bragança'): 510, ('L11', 'Viseu'): 291, ('L11', 'Vila Real'): 400, ('L11', 'Coimbra'): 206, ('L11', 'Viana do Castelo'): 385, ('L11', 'Braga'): 363, ('L11', 'Guarda'): 318,
+    ('L11', 'Castelo Branco'): 224, ('L11', 'Beja'): 176, ('L11', 'Santarém'): 80, ('L11', 'Lisboa'): 0, ('L11', 'Porto'): 314, ('L11', 'Leiria'): 150, ('L11', 'Faro'): 281, 
+    ('L11', 'Aveiro'): 255, ('L11', 'Setúbal'): 53, ('L11', 'Portalegre'): 230, ('L11', 'Évora'): 137,
+    ('L12', 'Bragança'): 210, ('L12', 'Viseu'): 127, ('L12', 'Vila Real'): 100, ('L12', 'Coimbra'): 122, ('L12', 'Viana do Castelo'): 74, ('L12', 'Braga'): 57, ('L12', 'Guarda'): 200,
+    ('L12', 'Castelo Branco'): 257, ('L12', 'Beja'): 448, ('L12', 'Santarém'): 245, ('L12', 'Lisboa'): 314, ('L12', 'Porto'): 0, ('L12', 'Leiria'): 187, ('L12', 'Faro'): 551, 
+    ('L12', 'Aveiro'): 76, ('L12', 'Setúbal'): 349, ('L12', 'Portalegre'): 294, ('L12', 'Évora'): 407,
+    ('L13', 'Bragança'): 383, ('L13', 'Viseu'): 195, ('L13', 'Vila Real'): 273, ('L13', 'Coimbra'): 79, ('L13', 'Viana do Castelo'): 258, ('L13', 'Braga'): 236, ('L13', 'Guarda'): 262,
+    ('L13', 'Castelo Branco'): 169, ('L13', 'Beja'): 283, ('L13', 'Santarém'): 81, ('L13', 'Lisboa'): 150, ('L13', 'Porto'): 187, ('L13', 'Leiria'): 0, ('L13', 'Faro'): 383, 
+    ('L13', 'Aveiro'): 119, ('L13', 'Setúbal'): 180, ('L13', 'Portalegre'): 172, ('L13', 'Évora'): 239,
+    ('L14', 'Bragança'): 751, ('L14', 'Viseu'): 528, ('L14', 'Vila Real'): 637, ('L14', 'Coimbra'): 443, ('L14', 'Viana do Castelo'): 622, ('L14', 'Braga'): 600, ('L14', 'Guarda'): 555,
+    ('L14', 'Castelo Branco'): 461, ('L14', 'Beja'): 147, ('L14', 'Santarém'): 307, ('L14', 'Lisboa'): 281, ('L14', 'Porto'): 551, ('L14', 'Leiria'): 383, ('L14', 'Faro'): 0,
+    ('L14', 'Aveiro'): 491, ('L14', 'Setúbal'): 244, ('L14', 'Portalegre'): 382, ('L14', 'Évora'): 226,
+    ('L15', 'Bragança'): 272, ('L15', 'Viseu'): 86, ('L15', 'Vila Real'): 162, ('L15', 'Coimbra'): 63, ('L15', 'Viana do Castelo'): 148, ('L15', 'Braga'): 126, ('L15', 'Guarda'): 159,
+    ('L15', 'Castelo Branco'): 199, ('L15', 'Beja'): 389, ('L15', 'Santarém'): 186, ('L15', 'Lisboa'): 255, ('L15', 'Porto'): 76, ('L15', 'Leiria'): 119, ('L15', 'Faro'): 491,
+    ('L15', 'Aveiro'): 0, ('L15', 'Setúbal'): 289, ('L15', 'Portalegre'): 234, ('L15', 'Évora'): 347,
+    ('L16', 'Bragança'): 545, ('L16', 'Viseu'): 327, ('L16', 'Vila Real'): 435, ('L16', 'Coimbra'): 242, ('L16', 'Viana do Castelo'): 421, ('L16', 'Braga'): 399, ('L16', 'Guarda'): 354,
+    ('L16', 'Castelo Branco'): 260, ('L16', 'Beja'): 142, ('L16', 'Santarém'): 117, ('L16', 'Lisboa'): 53, ('L16', 'Porto'): 349, ('L16', 'Leiria'): 180, ('L16', 'Faro'): 244,
+    ('L16', 'Aveiro'): 289, ('L16', 'Setúbal'): 0, ('L16', 'Portalegre'): 193, ('L16', 'Évora'): 100,
+    ('L17', 'Bragança'): 363, ('L17', 'Viseu'): 260, ('L17', 'Vila Real'): 355, ('L17', 'Coimbra'): 172, ('L17', 'Viana do Castelo'): 365, ('L17', 'Braga'): 344, ('L17', 'Guarda'): 189,
+    ('L17', 'Castelo Branco'): 95, ('L17', 'Beja'): 181, ('L17', 'Santarém'): 162, ('L17', 'Lisboa'): 230, ('L17', 'Porto'): 294, ('L17', 'Leiria'): 172, ('L17', 'Faro'): 382,
+    ('L17', 'Aveiro'): 234, ('L17', 'Setúbal'): 193, ('L17', 'Portalegre'): 0, ('L17', 'Évora'): 103,
+    ('L18', 'Bragança'): 462, ('L18', 'Viseu'): 360, ('L18', 'Vila Real'): 493, ('L18', 'Coimbra'): 300, ('L18', 'Viana do Castelo'): 478, ('L18', 'Braga'): 457, ('L18', 'Guarda'): 289,
+    ('L18', 'Castelo Branco'): 195, ('L18', 'Beja'): 80, ('L18', 'Santarém'): 163, ('L18', 'Lisboa'): 137, ('L18', 'Porto'): 407, ('L18', 'Leiria'): 239, ('L18', 'Faro'): 226,
+    ('L18', 'Aveiro'): 347, ('L18', 'Setúbal'): 100, ('L18', 'Portalegre'): 103, ('L18', 'Évora'): 0
+} 
+
+demand_twh = {
+    "Bragança": 0, "Viseu": 0, "Vila Real": 0, "Coimbra": 3.87, "Viana do Castelo": 0.67, "Braga": 0,
+    "Guarda": 0, "Castelo Branco": 0.54, "Beja": 0, "Santarém": 0.53, "Lisboa": 1.34, "Porto": 0,
+    "Leiria": 0.63, "Faro": 0.62, "Aveiro": 0.84, "Setúbal": 5.25, "Portalegre": 0, "Évora": 0
+}
+
+# Função para calcular custo de transporte entre 0.35 e 0.50 €/tH2-km
+def calculate_transport_cost(dist_km):
+    min_cost = 0.35
+    max_cost = 0.50
+    cost_per_km = min_cost + ((max_cost - min_cost) * min(dist_km / 400, 1))
+    return round(cost_per_km, 2)
+transportation_cost = {k: calculate_transport_cost(v) for k, v in distance.items()}
+
+# Conversion of TWh to tons per day
+def convert_twh_to_ton_day(demand_twh):
+    especific_energy_h2 = 33.33  # kWh/kg
+    demand_ton_year = (demand_twh * 1e12) / (especific_energy_h2 * 1e3)  # Convert to tons/year
+    demand_ton_day = demand_ton_year / 365  # Convert to tons/day
+    return demand_ton_day
+
+demand = {loc: convert_twh_to_ton_day(demand) for loc, demand in demand_twh.items()}
+
+energy_availability = {
+    "L1": {"hydro": 7.6, "wind": 0.5, "solar": 0.5},
+    "L2": {"hydro": 3.30, "wind": 4.10, "solar": 0},
+    "L3": {"hydro": 1.10, "wind": 7.00, "solar": 0.40},
+    "L4": {"hydro": 3.80, "wind": 0.90, "solar": 0},
+    "L5": {"hydro": 2.70, "wind": 2.40, "solar": 0},
+    "L6": {"hydro": 1.50, "wind": 3.90, "solar": 0.10},
+    "L7": {"hydro": 1.10, "wind": 3.30, "solar": 0.10},
+    "L8": {"hydro": 0, "wind": 0, "solar": 0},
+    "L9": {"hydro": 2.00, "wind": 0.50, "solar": 2.40},
+    "L10": {"hydro": 0, "wind": 0, "solar": 0},
+    "L11": {"hydro": 0, "wind": 0, "solar": 0},
+    "L12": {"hydro": 0, "wind": 0, "solar": 0},
+    "L13": {"hydro": 0, "wind": 0, "solar": 0},
+    "L14": {"hydro": 0, "wind": 1.40, "solar": 2.10},
+    "L15": {"hydro": 0, "wind": 0, "solar": 0},
+    "L16": {"hydro": 0, "wind": 0, "solar": 0},
+    "L17": {"hydro": 0, "wind": 0, "solar": 0},
+    "L18": {"hydro": 0, "wind": 0, "solar": 0},
+}
+
+energy_per_ton_day_twh = (1e12 / (33.33 * 1e3)) / 365  # TWh necessários para produzir 1 tH2/dia
+
+targets = {
+    2030: 0.035,
+    2040: 0.125,
+    2050: 0.225
+}
+
+model = plp.LpProblem("Green_Hydrogen_Supply_Chain", plp.LpMinimize)
+
+# DECISION VARIABLE: quantity of H2 transported from local i to district j
+quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="Continuous")
+
+# DECISION VARIABLE: if a fabric is installed in local i with size z
+fabric_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="binary")
+
+# OBJECTIVE FUNCTION: minimize the costs of installation and transportation
+model += (plp.lpSum(fabric_installed[(i, z)] * cost_instalation[i][z] for i in locals for z in ["S", "M", "L"]) 
+           + plp.lpSum(quantity_transported[i, j] * transportation_cost[(i, j)] * distance [(i, j)] for i in locals for j in districts))
+
+# CONSTRAINTS
+# 1 - The total production in each local can't exceed the total capacity of that fabric
+for i in locals:
+    for z in ['S', 'M', 'L']:
+        model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= fabrics_capacity[z] * fabric_installed[(i, z)], f"Capacidade_fabrica_{i}_{z}"
+  
+# 3 - Constraint to renewable energy
+for i in locals:
+     model += plp.lpSum(quantity_transported [(i, j)] for j in districts) <= ((energy_availability[i]["hydro"] + energy_availability[i]["wind"] 
+                                                                             + energy_availability[i]["solar"]) * energy_per_ton_day_twh), f"Energia_disponivel_{i}"
+
+# Constraint to satisfy the demand for the years 2030, 2040, 2050 
+for year, target in targets.items():
+    for j in districts:
+        model += plp.lpSum(quantity_transported[(i, j)] for i in locals) == demand[j] * target, f"Demand_{j}_{year}"
+    
+    model.solve()
+    
+    print(f"\n--- Results for {year} ---")
+    print("Status:", plp.LpStatus[model.status])
+    
+    print("\nProduct Flows (H₂ Transported):")
+    for i in locals:
+        for j in districts:
+            if quantity_transported[(i, j)].varValue > 0:
+                print(f"Quantity transported from {i} to {j}: {quantity_transported[(i, j)].varValue} tH2")
+    
+    print("\nInstalled Fabrics:")
+    for i in locals:
+        for z in ["S", "M", "L"]:
+            if fabric_installed[(i, z)].varValue > 0:
+                print(f"Fabrics of size {z} installed in {i}: {fabric_installed[(i, z)].varValue}")
