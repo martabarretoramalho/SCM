@@ -5,7 +5,7 @@ districts = ["Bragança", "Viseu", "Vila Real", "Coimbra", "Viana do Castelo", "
              "Castelo Branco", "Beja", "Santarém", "Lisboa", "Porto", "Leiria", "Faro", 
              "Aveiro", "Setúbal", "Portalegre", "Évora"] # where to consume
 
-cost_instalation = {loc: {"S": 20000, "M": 297000, "L": 854400} for loc in locals}
+cost_instalation = {"S": 20000, "M": 297000, "L": 854400}
 
 factory_capacity = {"S": 10, "M": 150, "L": 480}
 
@@ -127,7 +127,7 @@ quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for 
 factory_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="binary")
 
 # OBJECTIVE FUNCTION: minimize the costs of installation and transportation
-model += (plp.lpSum(factory_installed[(i, z)] * cost_instalation[i][z] for i in locals for z in ["S", "M", "L"]) 
+model += (plp.lpSum(factory_installed[(i, z)] * cost_instalation[z] for i in locals for z in ["S", "M", "L"]) 
            + plp.lpSum(quantity_transported[i, j] * transportation_cost[(i, j)] * distance [(i, j)] for i in locals for j in districts))
 
 # CONSTRAINTS
