@@ -133,33 +133,38 @@ model += (plp.lpSum(fabric_installed[(i, z)] * cost_instalation[i][z] for i in l
 for i in locals:
     for z in ['S', 'M', 'L']:
         model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= fabrics_capacity[z] * fabric_installed[(i, z)], f"Capacidade_fabrica_{i}_{z}"
-
-# 2 - Total demand in each district has to be satisfied
-for j in districts:
-    model += plp.lpSum(quantity_transported[(i, j)] for i in locals) >= demand[j], f"Demand_{j}"
   
-# 3- Constraint to renewable energy
+# 3 - Constraint to renewable energy
 for i in locals:
-    # We can define a rule of proportion, depending on how much renewable energy is necessary to produce one unit of H₂.
     model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= (energy_availability[i]["hydro"] + energy_availability[i]["wind"] 
                                                                             + energy_availability[i]["solar"]), f"Energia_disponivel_{i}"
+    
+# 4 - Constraints to encourage larger factories if it satisfies the demand more efficiently
+for i in locals:
+    model += fabric_installed[(i, "S")] <= fabric_installed[(i, "M")] + fabric_installed[(i, "L")], f"Encourage_Larger_Factories_{i}_1"
+    model += fabric_installed[(i, "M")] <= fabric_installed[(i, "L")], f"Encourage_Larger_Factories_{i}_2"
 
-# REVER        
-# Constraint to satisfy the adjusted demand for the years 2030, 2040, 2050 
+# Constraint to satisfy the demand for the years 2030, 2040, 2050 
 for year, target in targets.items():
     for j in districts:
         model += plp.lpSum(quantity_transported[(i, j)] for i in locals) >= demand[j] * target, f"Demand_{j}_{year}"
-
-model.solve()
-
-print("Status:", plp.LpStatus[model.status])
-print("\nProduct Flows (H₂ Transported):")
-for i in locals:
+    
+    model.solve()
+    
+    print(f"\n--- Results for {year} ---")
+    print("Status:", plp.LpStatus[model.status])
+    
+    print("\nProduct Flows (H₂ Transported):")
+    for i in locals:
+        for j in districts:
+            if quantity_transported[(i, j)].varValue > 0:
+                print(f"Quantity transported from {i} to {j}: {quantity_transported[(i, j)].varValue} tH2")
+    
+    print("\nInstalled Fabrics:")
+    for i in locals:
+        for z in ["S", "M", "L"]:
+            if fabric_installed[(i, z)].varValue > 0:
+                print(f"Fabrics of size {z} installed in {i}: {fabric_installed[(i, z)].varValue}")
+    
     for j in districts:
-        if quantity_transported[(i, j)].varValue > 0:
-            print(f"Quantity transported from {i} to {j}: {quantity_transported[(i, j)].varValue} tH2")
-print("\nInstalled Fabrics:")
-for i in locals:
-    for z in ["S", "M", "L"]:
-        if fabric_installed[(i, z)].varValue > 0:
-            print(f"Fabrics of size {z} installed in {i}: {fabric_installed[(i, z)].varValue}")
+        model.constraints.pop(f"Demand_{j}_{year}")
