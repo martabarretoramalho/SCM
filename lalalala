@@ -5,7 +5,7 @@ districts = ["Bragança", "Viseu", "Vila Real", "Coimbra", "Viana do Castelo", "
              "Castelo Branco", "Beja", "Santarém", "Lisboa", "Porto", "Leiria", "Faro", 
              "Aveiro", "Setúbal", "Portalegre", "Évora"] # where to consume
 
-cost_instalation = {"S": 20000, "M": 297000, "L": 854400}
+cost_instalation = {"S": 17800, "M": 267000, "L": 854400}
 
 factory_capacity = {"S": 10, "M": 150, "L": 480}
 
@@ -112,19 +112,15 @@ energy_availability = {
 
 energy_per_ton_day_twh = (1e12 / (33.33 * 1e3)) / 365  # TWh necessários para produzir 1 tH2/dia
 
-targets = {
-    2030: 0.035,
-    2040: 0.125,
-    2050: 0.225
-}
+target = 0.035
 
 model = plp.LpProblem("Green_Hydrogen_Supply_Chain", plp.LpMinimize)
 
 # DECISION VARIABLE: quantity of H2 transported from local i to district j
-quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="Continuous")
+quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="cat=plp.LpContinuous")
 
 # DECISION VARIABLE: if a fabric is installed in local i with size z
-factory_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="binary")
+factory_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="cat=plp.LpInteger")
 
 # OBJECTIVE FUNCTION: minimize the costs of installation and transportation
 model += (plp.lpSum(factory_installed[(i, z)] * cost_instalation[z] for i in locals for z in ["S", "M", "L"]) 
@@ -133,32 +129,33 @@ model += (plp.lpSum(factory_installed[(i, z)] * cost_instalation[z] for i in loc
 # CONSTRAINTS
 # 1 - The total production in each local can't exceed the total capacity of that fabric
 for i in locals:
-    for z in ['S', 'M', 'L']:
-        model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= factory_capacity[z] * factory_installed[(i, z)], f"Capacidade_fabrica_{i}_{z}"
-        
+    model += plp.lpSum(quantity_transported[i, j] for j in districts) <= plp.lpSum(factory_capacity[z] * factory_installed[i, z] for z in ["S", "M", "L"]), f"capacity_{i}"
+ 
+# Adicionando restrição para limitar a produção total à demanda máxima esperada em qualquer ano
+max_demand = max(demand.values())  # Encontre a demanda máxima em qualquer local
+for i in locals:
+    model += plp.lpSum(quantity_transported[i, j] for j in districts) <= max_demand * target, f"Max_production_{i}"
+            
 # 3 - Constraint to renewable energy
 for i in locals:
-     model += plp.lpSum(quantity_transported [(i, j)] for j in districts) <= ((energy_availability[i]["hydro"] + energy_availability[i]["wind"] 
+     model += plp.lpSum(quantity_transported [(i, j)] for j in districts) <= 0.7 * ((energy_availability[i]["hydro"] + energy_availability[i]["wind"] 
                                                                              + energy_availability[i]["solar"]) * energy_per_ton_day_twh), f"Energia_disponivel_{i}"
 
-# Constraint to satisfy the demand for the years 2030, 2040, 2050 
-for year, target in targets.items():
+for j in districts:
+    model += plp.lpSum(quantity_transported[(i, j)] for i in locals) == demand[j] * target, f"Demand_{j}"
+    
+model.solve()
+    
+print("Status:", plp.LpStatus[model.status])
+    
+print("\nProduct Flows (H₂ Transported):")
+for i in locals:
     for j in districts:
-        model += plp.lpSum(quantity_transported[(i, j)] for i in locals) == demand[j] * target, f"Demand_{j}_{year}"
+        if quantity_transported[(i, j)].varValue > 0:
+            print(f"Quantity transported from {i} to {j}: {quantity_transported[(i, j)].varValue} tH2")
     
-    model.solve()
-    
-    print(f"\n--- Results for {year} ---")
-    print("Status:", plp.LpStatus[model.status])
-    
-    print("\nProduct Flows (H₂ Transported):")
-    for i in locals:
-        for j in districts:
-            if quantity_transported[(i, j)].varValue > 0:
-                print(f"Quantity transported from {i} to {j}: {quantity_transported[(i, j)].varValue} tH2")
-    
-    print("\nInstalled Fabrics:")
-    for i in locals:
-        for z in ["S", "M", "L"]:
-            if factory_installed[(i, z)].varValue > 0:
-                print(f"Fabrics of size {z} installed in {i}: {factory_installed[(i, z)].varValue}")
+print("\nInstalled Fabrics:")
+for i in locals:
+    for z in ["S", "M", "L"]:
+        if factory_installed[(i, z)].varValue > 0:
+             print(f"Fabrics of size {z} installed in {i}: {factory_installed[(i, z)].varValue}")
