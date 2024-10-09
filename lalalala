@@ -7,7 +7,7 @@ districts = ["Bragança", "Viseu", "Vila Real", "Coimbra", "Viana do Castelo", "
 
 cost_instalation = {loc: {"S": 20000, "M": 297000, "L": 854400} for loc in locals}
 
-fabrics_capacity = {"S": 10, "M": 150, "L": 480}
+factory_capacity = {"S": 10, "M": 150, "L": 480}
 
 distance = {
     ('L1', 'Bragança'):0, ('L1', 'Viseu'): 200, ('L1', 'Vila Real'): 118, ('L1', 'Coimbra'): 324, ('L1', 'Viana do Castelo'): 274, ('L1', 'Braga'): 217, ('L1', 'Guarda'): 178, 
@@ -124,18 +124,18 @@ model = plp.LpProblem("Green_Hydrogen_Supply_Chain", plp.LpMinimize)
 quantity_transported = plp.LpVariable.dicts("quantity transported", [(i, j) for i in locals for j in districts], lowBound=0, cat="Continuous")
 
 # DECISION VARIABLE: if a fabric is installed in local i with size z
-fabric_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="binary")
+factory_installed = plp.LpVariable.dicts("fabric_installed", [(i, z) for i in locals for z in ["S", "M", "L"]], cat="binary")
 
 # OBJECTIVE FUNCTION: minimize the costs of installation and transportation
-model += (plp.lpSum(fabric_installed[(i, z)] * cost_instalation[i][z] for i in locals for z in ["S", "M", "L"]) 
+model += (plp.lpSum(factory_installed[(i, z)] * cost_instalation[i][z] for i in locals for z in ["S", "M", "L"]) 
            + plp.lpSum(quantity_transported[i, j] * transportation_cost[(i, j)] * distance [(i, j)] for i in locals for j in districts))
 
 # CONSTRAINTS
 # 1 - The total production in each local can't exceed the total capacity of that fabric
 for i in locals:
     for z in ['S', 'M', 'L']:
-        model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= fabrics_capacity[z] * fabric_installed[(i, z)], f"Capacidade_fabrica_{i}_{z}"
-  
+        model += plp.lpSum(quantity_transported[(i, j)] for j in districts) <= factory_capacity[z] * factory_installed[(i, z)], f"Capacidade_fabrica_{i}_{z}"
+        
 # 3 - Constraint to renewable energy
 for i in locals:
      model += plp.lpSum(quantity_transported [(i, j)] for j in districts) <= ((energy_availability[i]["hydro"] + energy_availability[i]["wind"] 
@@ -160,5 +160,5 @@ for year, target in targets.items():
     print("\nInstalled Fabrics:")
     for i in locals:
         for z in ["S", "M", "L"]:
-            if fabric_installed[(i, z)].varValue > 0:
-                print(f"Fabrics of size {z} installed in {i}: {fabric_installed[(i, z)].varValue}")
+            if factory_installed[(i, z)].varValue > 0:
+                print(f"Fabrics of size {z} installed in {i}: {factory_installed[(i, z)].varValue}")
