@@ -10,7 +10,7 @@
         <mxCell id="p6w7L6rgmmCRb7S44_8V-4" value="Arrival" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
           <mxGeometry x="40" y="50" width="120" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="p6w7L6rgmmCRb7S44_8V-5" value="Check-in" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;gradientDirection=east;strokeColor=#6c8ebf;gradientColor=#d6e8d4;" vertex="1" parent="1">
+        <mxCell id="p6w7L6rgmmCRb7S44_8V-5" value="Check-in" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;gradientDirection=west;strokeColor=#6c8ebf;gradientColor=#d6e8d4;" vertex="1" parent="1">
           <mxGeometry x="690" y="50" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="p6w7L6rgmmCRb7S44_8V-6" value="Queue to luggage 1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
